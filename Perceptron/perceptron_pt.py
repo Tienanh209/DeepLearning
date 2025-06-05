@@ -8,15 +8,21 @@ class MyDenseLayer(nn.Module):
         self.b = nn.Parameter(torch.randn(1, output_dim, requires_grad=True))
     def forward(self, inputs):
         z = torch.matmul(inputs, self.W) + self.b
-        output = torch.sigmoid(z)
+        output = torch.relu(z)
         return output
 
 model = nn.Sequential(
-    MyDenseLayer(input_dim=3, output_dim=1)  # output_dim=1 for binary output
+    MyDenseLayer(input_dim=3, output_dim=16),
+    nn.Linear(16, 8),
+    nn.ReLU(),
+    nn.Linear(8, 4),
+    nn.ReLU(),
+    nn.Linear(4, 1),
+    nn.Sigmoid()
 )
 
 # Hours studied, hours slept, practice tests
-student_data = torch.tensor([[7.0, 7.0, 4.0]], dtype=torch.float32)
+student_data = torch.tensor([[8.0, 6.0, 4.0]], dtype=torch.float32)
 
 output = model(student_data)
 
