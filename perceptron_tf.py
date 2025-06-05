@@ -21,7 +21,6 @@ model = tf.keras.Sequential([
 # Hours studied, hours slept, practice tests
 student_data = tf.constant([[7.0, 7.0, 4.0]], dtype=tf.float32)
 
-# Run the model
 output = model(student_data)
 
 print(f"Passing: {round(output.numpy()[0][0] * 100)}%")
