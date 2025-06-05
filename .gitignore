@@ -1,0 +1,37 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS metadata
+.DS_Store
+
+# Logs
+*.log
+
+# Jupyter notebook checkpoints
+*.ipynb_checkpoints/
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+
+# Environment variables
+.env
+
+# Deep Learning model files (if not tracked)
+*.pth
+*.pt
+*.h5
+*.hdf5
+
+# Large data or output directories (customize as needed)
+data/
+output/
+models/
