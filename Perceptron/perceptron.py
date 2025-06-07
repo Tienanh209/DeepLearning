@@ -8,19 +8,15 @@ iris = load_iris()
 X = iris.data
 y = iris.target
 
+# Standardize features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X_scaled, y, test_size=0.2, random_state=42
-)
+# Split into train/val/test sets
+X_train_full, X_test, y_train_full, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_train_full, y_train_full, test_size=0.2, random_state=42)
 
-X_train = tf.constant(X_train, dtype=tf.float32)
-y_train = tf.constant(y_train, dtype=tf.int32)
-X_test = tf.constant(X_test, dtype=tf.float32)
-y_test = tf.constant(y_test, dtype=tf.int32)
-
-# Define model using built-in layers
+# Build model
 model = tf.keras.Sequential([
     tf.keras.layers.Dense(16, activation='relu', input_shape=(4,)),
     tf.keras.layers.Dropout(0.3),
@@ -29,28 +25,30 @@ model = tf.keras.Sequential([
     tf.keras.layers.Dense(3, activation='softmax')
 ])
 
-# Loss, optimizer, metrics
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy()
-optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-accuracy_metric = tf.keras.metrics.SparseCategoricalAccuracy()
+# Compile model
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(),
+    loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+    metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
+)
 
-# Training Loop
-epochs = 100
-for epoch in range(epochs):
-    with tf.GradientTape() as tape:
-        logits = model(X_train, training=True)
-        loss = loss_fn(y_train, logits)
+# Early stopping callback
+early_stop = tf.keras.callbacks.EarlyStopping(
+    monitor='val_loss',         # Watches the validation loss during training.
+    patience=10,                # If validation loss doesn't improve for 10 consecutive epochs, training stops early.
+    restore_best_weights=True   # from the epoch with the best validation loss
+)
 
-    grads = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-    accuracy_metric.update_state(y_train, logits)
-    acc = accuracy_metric.result().numpy()
-    print(f"Epoch {epoch+1}/{epochs} - Loss: {loss.numpy():.4f} - Accuracy: {acc:.4f}")
-    accuracy_metric.reset_state()
+# Train model
+history = model.fit(
+    X_train, y_train,
+    validation_data=(X_val, y_val),
+    epochs=100,
+    batch_size=16,              # The model processes 16 samples at a time.
+    callbacks=[early_stop],     # Adds the early stopping mechanism.
+    verbose=1
+)
 
 # Evaluate on test set
-test_logits = model(X_test, training=False)
-test_preds = tf.argmax(test_logits, axis=1)
-test_acc = tf.reduce_mean(tf.cast(test_preds == tf.cast(y_test, tf.int64), tf.float32))
-print(f"\nTest Accuracy: {test_acc.numpy():.2f}")
+test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
+print(f"\nTest Accuracy: {test_acc:.2f}")
